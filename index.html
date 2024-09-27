@@ -4,56 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Blocks</title>
+    <!-- Including Google Fonts and Icons for better styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <!-- Including Material Icons for toolbar buttons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Linking the updated CSS -->
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Including interact.js for drag and drop functionality -->
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 </head>
 <body>
-    <!-- Профиль пользователя -->
+    <!-- User Profile Section -->
     <div id="user-profile">
         <label for="avatar-input">
-            <img id="avatar" src="images/default-avatar.png" alt="Аватар пользователя">
+            <img id="avatar" src="images/default-avatar.png" alt="User Avatar">
         </label>
         <input type="file" id="avatar-input" accept="image/*" style="display: none;">
-        <div id="username" contenteditable="true">Ваш никнейм</div>
+        <div id="username" contenteditable="true">Your Username</div>
     </div>
 
-    <!-- Контейнер для блоков -->
+    <!-- Container for Blocks -->
     <div id="grid-container">
-        <!-- Блоки с предопределенными местами -->
-        <div class="block" data-id="1"><div class="block-content">Block 1</div></div>
-        <div class="block" data-id="2"><div class="block-content">Block 2</div></div>
-        <div class="block" data-id="3"><div class="block-content">Block 3</div></div>
+        <!-- Blocks will be dynamically added here -->
     </div>
 
-    <!-- Панель редактирования блока -->
+    <!-- Modal for Block Editor -->
     <div id="block-editor-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <!-- Форма для ввода данных блока -->
+            <!-- Form for Block Data -->
             <div id="block-editor">
-                <label>Ссылка:
-                    <input type="text" id="block-link">
+                <label>Link URL:
+                    <input type="text" id="block-link" placeholder="Enter URL">
                 </label>
-                <label>Картинка:
+                <label>Image:
                     <input type="file" id="block-image-input" accept="image/*">
                 </label>
-                <label>Текст:
-                    <textarea id="block-text"></textarea>
+                <label>Text:
+                    <textarea id="block-text" placeholder="Enter text"></textarea>
                 </label>
             </div>
-            <button id="save-block-btn">Сохранить</button>
+            <button id="save-block-btn">Save</button>
         </div>
     </div>
 
-    <!-- Панель для управления блоками -->
+    <!-- Bottom Toolbar -->
     <div id="bottom-toolbar">
-        <button id="add-link-btn">Link</button>
-        <button id="add-image-btn">Image</button>
-        <button id="add-text-btn">Text</button>
-        <button id="reset-btn">Сбросить все</button>
+        <button id="add-link-btn"><i class="material-icons">link</i>Link</button>
+        <button id="add-image-btn"><i class="material-icons">image</i>Image</button>
+        <button id="add-text-btn"><i class="material-icons">text_fields</i>Text</button>
+        <button id="reset-btn"><i class="material-icons">refresh</i>Reset</button>
     </div>
 
+    <!-- Including the updated JavaScript file -->
     <script src="js/main.js"></script>
 </body>
 </html>

@@ -4,59 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Blocks</title>
-    <!-- Including Google Fonts and Icons for better styling -->
+    <!-- Подключаем шрифты и иконки -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <!-- Including Material Icons for toolbar buttons -->
+    <!-- Подключаем Material Icons для кнопок -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Linking the updated CSS -->
+    <!-- Подключаем стили -->
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Including interact.js for drag and drop functionality -->
+    <!-- Подключаем interact.js для перетаскивания -->
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 </head>
 <body>
-    <!-- User Profile Section -->
+    <!-- Профиль пользователя -->
     <div id="user-profile">
         <label for="avatar-input">
-            <img id="avatar" src="images/default-avatar.png" alt="User Avatar">
+            <img id="avatar" src="images/default-avatar.png" alt="Аватар пользователя">
         </label>
         <input type="file" id="avatar-input" accept="image/*" style="display: none;">
-        <div id="username" contenteditable="true">Your Username</div>
+        <div id="username" contenteditable="true">Ваш никнейм</div>
     </div>
 
-    <!-- Container for Blocks -->
+    <!-- Контейнер для блоков -->
     <div id="grid-container">
-        <!-- Blocks will be dynamically added here -->
+        <!-- Предопределенные ячейки -->
+        <div class="grid-cell" data-position="1"></div>
+        <div class="grid-cell" data-position="2"></div>
+        <div class="grid-cell" data-position="3"></div>
+        <div class="grid-cell" data-position="4"></div>
+        <div class="grid-cell" data-position="5"></div>
+        <div class="grid-cell" data-position="6"></div>
+        <!-- Добавьте столько ячеек, сколько нужно -->
     </div>
 
-    <!-- Modal for Block Editor -->
+    <!-- Модальное окно для редактирования блока -->
     <div id="block-editor-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <!-- Form for Block Data -->
+            <!-- Форма для ввода данных блока -->
             <div id="block-editor">
-                <label>Link URL:
-                    <input type="text" id="block-link" placeholder="Enter URL">
+                <label>Ссылка:
+                    <input type="text" id="block-link" placeholder="Введите URL">
                 </label>
-                <label>Image:
+                <label>Картинка:
                     <input type="file" id="block-image-input" accept="image/*">
                 </label>
-                <label>Text:
-                    <textarea id="block-text" placeholder="Enter text"></textarea>
+                <label>Текст:
+                    <textarea id="block-text" placeholder="Введите текст"></textarea>
                 </label>
             </div>
-            <button id="save-block-btn">Save</button>
+            <button id="save-block-btn">Сохранить</button>
         </div>
     </div>
 
-    <!-- Bottom Toolbar -->
+    <!-- Нижняя панель инструментов -->
     <div id="bottom-toolbar">
         <button id="add-link-btn"><i class="material-icons">link</i>Link</button>
         <button id="add-image-btn"><i class="material-icons">image</i>Image</button>
         <button id="add-text-btn"><i class="material-icons">text_fields</i>Text</button>
+        <button id="toggle-edit-btn"><i class="material-icons">edit</i>Edit Mode</button>
         <button id="reset-btn"><i class="material-icons">refresh</i>Reset</button>
     </div>
 
-    <!-- Including the updated JavaScript file -->
+    <!-- Подключаем основной JavaScript файл -->
     <script src="js/main.js"></script>
 </body>
 </html>

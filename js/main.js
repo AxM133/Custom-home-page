@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById('username');
     const gridContainer = document.getElementById('grid-container');
 
-    // Modal Elements
+    // Модальные элементы
     const blockEditorModal = document.getElementById('block-editor-modal');
     const closeBlockEditorBtn = blockEditorModal.querySelector('.close-button');
     const saveBlockBtn = document.getElementById('save-block-btn');
@@ -12,12 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const blockImageInput = document.getElementById('block-image-input');
     const blockTextInput = document.getElementById('block-text');
 
-    // Toolbar Buttons
+    // Кнопки панели инструментов
     const addLinkBtn = document.getElementById('add-link-btn');
     const addImageBtn = document.getElementById('add-image-btn');
     const addTextBtn = document.getElementById('add-text-btn');
+    const toggleEditBtn = document.getElementById('toggle-edit-btn');
+    const resetBtn = document.getElementById('reset-btn');
 
-    // Load User Profile
+    let isEditMode = false; // Флаг режима редактирования
+
+    // Загрузка профиля пользователя
     function loadUserProfile() {
         const savedAvatar = localStorage.getItem('avatar');
         const savedUsername = localStorage.getItem('username');
@@ -33,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUserProfile();
 
-    // Save Avatar
+    // Сохранение аватара
     avatar.addEventListener('click', () => {
         avatarInput.click();
     });
@@ -50,12 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Save Username
+    // Сохранение никнейма
     username.addEventListener('input', () => {
         localStorage.setItem('username', username.textContent);
     });
 
-    // Toolbar Button Handlers
+    // Обработчики кнопок панели инструментов
     addLinkBtn.addEventListener('click', () => {
         openBlockEditorModal();
     });
@@ -68,7 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
         createTextBlock();
     });
 
-    // Modal Functions
+    toggleEditBtn.addEventListener('click', () => {
+        isEditMode = !isEditMode;
+        toggleEditBtn.classList.toggle('active', isEditMode);
+        document.body.classList.toggle('edit-mode', isEditMode);
+        toggleEditMode();
+    });
+
+    resetBtn.addEventListener('click', () => {
+        resetAll();
+    });
+
+    // Функции модального окна
     function openBlockEditorModal() {
         blockLinkInput.value = '';
         blockImageInput.value = '';
@@ -93,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBlockEditorModal();
     });
 
-    // Create Link Block
+    // Создание блока-ссылки
     function createLinkBlock(link, imageFile, text) {
         const block = document.createElement('div');
         block.classList.add('block');
@@ -104,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function finalizeBlock() {
             block.innerHTML = `<div class="block-content">${content}</div>`;
-            gridContainer.appendChild(block);
+            placeBlockInFirstAvailableCell(block);
 
             createResizePanel(block);
             makeBlockInteractive(block);
@@ -130,14 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 content += `<div>${text}</div>`;
             }
             if (link) {
-                // Wrap content with a link
+                // Оборачиваем контент в ссылку
                 content = `<a href="${link}" target="_blank">${content}</a>`;
             }
             finalizeBlock();
         }
     }
 
-    // Create Image Block
+    // Создание блока-картинки
     function createImageBlock() {
         const block = document.createElement('div');
         block.classList.add('block');
@@ -145,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         block.setAttribute('data-type', 'image');
 
         block.innerHTML = `<div class="block-content">Click to add image</div>`;
-        gridContainer.appendChild(block);
+        placeBlockInFirstAvailableCell(block);
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -155,7 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const blockContent = block.querySelector('.block-content');
         blockContent.addEventListener('click', (e) => {
             e.stopPropagation();
-            fileInput.click();
+            if (isEditMode) {
+                fileInput.click();
+            }
         });
 
         fileInput.addEventListener('change', (e) => {
@@ -176,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBlocks();
     }
 
-    // Create Text Block
+    // Создание текстового блока
     function createTextBlock() {
         const block = document.createElement('div');
         block.classList.add('block');
@@ -189,8 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.contentEditable = false;
 
         block.addEventListener('dblclick', () => {
-            contentDiv.contentEditable = true;
-            contentDiv.focus();
+            if (isEditMode) {
+                contentDiv.contentEditable = true;
+                contentDiv.focus();
+            }
         });
 
         contentDiv.addEventListener('blur', () => {
@@ -199,26 +218,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         block.appendChild(contentDiv);
-        gridContainer.appendChild(block);
+        placeBlockInFirstAvailableCell(block);
         createResizePanel(block);
         makeBlockInteractive(block);
         saveBlocks();
     }
 
-    // Drag Move Listener
-    function dragMoveListener(event) {
-        const target = event.target;
-        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-        target.style.transform = `translate(${x}px, ${y}px)`;
-        target.setAttribute('data-x', x);
-        target.setAttribute('data-y', y);
-
-        saveBlocks();
+    // Размещение блока в первой доступной ячейке
+    function placeBlockInFirstAvailableCell(block) {
+        const emptyCell = document.querySelector('.grid-cell:not(.occupied)');
+        if (emptyCell) {
+            emptyCell.classList.add('occupied');
+            emptyCell.appendChild(block);
+            block.setAttribute('data-position', emptyCell.getAttribute('data-position'));
+        } else {
+            alert('Нет свободных ячеек для размещения блока.');
+        }
     }
 
-    // Create Resize Panel
+    // Панель управления блоком
     function createResizePanel(block) {
         const panel = document.createElement('div');
         panel.classList.add('resize-panel');
@@ -226,20 +244,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const increaseButton = document.createElement('button');
         increaseButton.innerHTML = '<i class="material-icons">zoom_out_map</i>';
         increaseButton.addEventListener('click', () => {
-            scaleBlock(block, 'increase');
+            if (isEditMode) {
+                scaleBlock(block, 'increase');
+            }
         });
 
         const decreaseButton = document.createElement('button');
         decreaseButton.innerHTML = '<i class="material-icons">zoom_in_map</i>';
         decreaseButton.addEventListener('click', () => {
-            scaleBlock(block, 'decrease');
+            if (isEditMode) {
+                scaleBlock(block, 'decrease');
+            }
         });
 
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '<i class="material-icons">delete</i>';
         deleteButton.addEventListener('click', () => {
-            block.remove();
-            saveBlocks();
+            if (isEditMode) {
+                removeBlock(block);
+            }
         });
 
         panel.appendChild(increaseButton);
@@ -248,10 +271,21 @@ document.addEventListener('DOMContentLoaded', () => {
         block.appendChild(panel);
     }
 
-    // Scale Block
+    // Удаление блока
+    function removeBlock(block) {
+        const position = block.getAttribute('data-position');
+        const cell = document.querySelector(`.grid-cell[data-position="${position}"]`);
+        if (cell) {
+            cell.classList.remove('occupied');
+        }
+        block.remove();
+        saveBlocks();
+    }
+
+    // Масштабирование блока
     function scaleBlock(block, action) {
-        let width = parseInt(block.style.width) || 150;
-        let height = parseInt(block.style.height) || 150;
+        let width = parseInt(block.style.width) || block.parentElement.offsetWidth;
+        let height = parseInt(block.style.height) || block.parentElement.offsetHeight;
         const scaleFactor = 50;
 
         if (action === 'increase') {
@@ -268,21 +302,143 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBlocks();
     }
 
-    // Reset Button
-    const resetBtn = document.getElementById('reset-btn');
-    resetBtn.addEventListener('click', () => {
+    // Переключение режима редактирования
+    function toggleEditMode() {
+        const blocks = document.querySelectorAll('.block');
+        blocks.forEach(block => {
+            const resizePanel = block.querySelector('.resize-panel');
+            if (isEditMode) {
+                // Активируем перетаскивание
+                interact(block).draggable(true);
+                block.style.cursor = 'move';
+
+                // Отключаем ссылки
+                const links = block.querySelectorAll('a');
+                links.forEach(link => {
+                    link.style.pointerEvents = 'none';
+                });
+            } else {
+                // Деактивируем перетаскивание
+                interact(block).draggable(false);
+                block.style.cursor = 'pointer';
+
+                // Включаем ссылки
+                const links = block.querySelectorAll('a');
+                links.forEach(link => {
+                    link.style.pointerEvents = 'auto';
+                });
+            }
+        });
+    }
+
+    // Функция для перетаскивания блоков
+    function makeBlockInteractive(block) {
+        interact(block).draggable({
+            enabled: isEditMode,
+            inertia: true,
+            onstart: function(event) {
+                if (isEditMode) {
+                    block.classList.add('dragging');
+                }
+            },
+            onmove: dragMoveListener,
+            onend: function(event) {
+                if (isEditMode) {
+                    block.classList.remove('dragging');
+                    snapBlockToGrid(block);
+                    saveBlocks();
+                }
+            }
+        });
+    }
+
+    // Функция перемещения блока
+    function dragMoveListener(event) {
+        if (!isEditMode) return;
+
+        const target = event.target;
+        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+        target.style.transform = `translate(${x}px, ${y}px)`;
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
+    }
+
+    // Привязка блока к сетке с обменом местами
+    function snapBlockToGrid(block) {
+        const cells = document.querySelectorAll('.grid-cell');
+        let closestCell = null;
+        let minDistance = Infinity;
+
+        const blockRect = block.getBoundingClientRect();
+
+        cells.forEach(cell => {
+            const cellRect = cell.getBoundingClientRect();
+            const dx = blockRect.left - cellRect.left;
+            const dy = blockRect.top - cellRect.top;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestCell = cell;
+            }
+        });
+
+        if (closestCell) {
+            const targetPosition = closestCell.getAttribute('data-position');
+
+            // Если ячейка занята, меняем блоки местами
+            if (closestCell.classList.contains('occupied')) {
+                const targetBlock = closestCell.querySelector('.block');
+                const sourceCell = block.parentElement;
+
+                // Обновляем позицию целевого блока
+                sourceCell.appendChild(targetBlock);
+                targetBlock.setAttribute('data-position', sourceCell.getAttribute('data-position'));
+
+                // Обновляем позицию перемещаемого блока
+                closestCell.appendChild(block);
+                block.setAttribute('data-position', targetPosition);
+
+                saveBlocks();
+            } else {
+                // Освобождаем предыдущую ячейку
+                const previousCell = block.parentElement;
+                previousCell.classList.remove('occupied');
+
+                // Занимаем новую ячейку
+                closestCell.appendChild(block);
+                closestCell.classList.add('occupied');
+                block.setAttribute('data-position', targetPosition);
+            }
+
+            // Сбрасываем трансформацию
+            block.style.transform = '';
+            block.setAttribute('data-x', 0);
+            block.setAttribute('data-y', 0);
+        } else {
+            // Возвращаем блок на место
+            block.style.transform = '';
+            block.setAttribute('data-x', 0);
+            block.setAttribute('data-y', 0);
+        }
+    }
+
+    // Сброс всех данных
+    function resetAll() {
         document.querySelectorAll('.block').forEach(block => {
-            block.remove();
+            removeBlock(block);
         });
 
         avatar.src = 'images/default-avatar.png';
         localStorage.removeItem('avatar');
-        username.textContent = 'Your Username';
+        username.textContent = 'Ваш никнейм';
         localStorage.removeItem('username');
         localStorage.removeItem('blocks');
-    });
+    }
 
-    // Load Blocks from Local Storage
+    // Загрузка блоков из localStorage
     function loadBlocks() {
         const savedBlocks = localStorage.getItem('blocks');
         if (savedBlocks) {
@@ -294,52 +450,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 block.setAttribute('data-type', data.type);
                 block.style.width = data.width;
                 block.style.height = data.height;
-                block.style.transform = `translate(${data.x}px, ${data.y}px)`;
-                block.setAttribute('data-x', data.x);
-                block.setAttribute('data-y', data.y);
 
                 block.innerHTML = `<div class="block-content">${data.content}</div>`;
-                gridContainer.appendChild(block);
+
+                const cell = document.querySelector(`.grid-cell[data-position="${data.position}"]`);
+                if (cell) {
+                    cell.classList.add('occupied');
+                    cell.appendChild(block);
+                    block.setAttribute('data-position', data.position);
+                }
 
                 createResizePanel(block);
                 makeBlockInteractive(block);
 
-                // Re-add event listeners for image blocks
+                // Восстанавливаем события для блоков
                 if (data.type === 'image') {
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.style.display = 'none';
-
+                    const fileInput = block.querySelector('input[type="file"]');
                     const blockContent = block.querySelector('.block-content');
                     blockContent.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        fileInput.click();
-                    });
-
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(event) {
-                                blockContent.innerHTML = `<img src="${event.target.result}" alt="Image">`;
-                                saveBlocks();
-                            };
-                            reader.readAsDataURL(file);
+                        if (isEditMode) {
+                            fileInput.click();
                         }
                     });
-
-                    block.appendChild(fileInput);
-                }
-
-                // Re-add event listeners for text blocks
-                else if (data.type === 'text') {
+                } else if (data.type === 'text') {
                     const contentDiv = block.querySelector('.block-content');
                     contentDiv.contentEditable = false;
 
                     block.addEventListener('dblclick', () => {
-                        contentDiv.contentEditable = true;
-                        contentDiv.focus();
+                        if (isEditMode) {
+                            contentDiv.contentEditable = true;
+                            contentDiv.focus();
+                        }
                     });
 
                     contentDiv.addEventListener('blur', () => {
@@ -351,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Save Blocks to Local Storage
+    // Сохранение блоков в localStorage
     function saveBlocks() {
         const blocks = document.querySelectorAll('.block');
         const blockData = [];
@@ -363,62 +505,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 content: block.querySelector('.block-content').innerHTML,
                 width: block.style.width,
                 height: block.style.height,
-                x: block.getAttribute('data-x'),
-                y: block.getAttribute('data-y')
+                position: block.getAttribute('data-position')
             });
         });
 
         localStorage.setItem('blocks', JSON.stringify(blockData));
     }
 
-    // Make Blocks Interactive
-    function makeBlockInteractive(block) {
-        const blockType = block.getAttribute('data-type');
-
-        let isDragging = false;
-        let holdTimer;
-
-        // Start drag after holding for 300ms
-        block.addEventListener('mousedown', (e) => {
-            holdTimer = setTimeout(() => {
-                isDragging = true;
-                interact(block).draggable({
-                    inertia: true,
-                    onmove: dragMoveListener,
-                    onend: () => {
-                        isDragging = false;
-                        interact(block).draggable(false);
-                        saveBlocks();
-                    },
-                    restrict: {
-                        restriction: "parent",
-                        endOnly: true
-                    }
-                });
-                interact(block).draggable(true);
-            }, 300);
-        });
-
-        block.addEventListener('mouseup', () => {
-            clearTimeout(holdTimer);
-            if (!isDragging && blockType === 'link') {
-                // Simulate click on link
-                const linkElement = block.querySelector('a');
-                if (linkElement) {
-                    window.open(linkElement.href, '_blank');
-                }
-            }
-        });
-
-        block.addEventListener('mouseleave', () => {
-            clearTimeout(holdTimer);
-        });
-    }
-
-    // Initialize
+    // Инициализация
     loadBlocks();
+    toggleEditMode(); // Устанавливаем начальное состояние режима редактирования
 
-    // Add resize panel and interactivity to existing blocks
+    // Добавляем события для существующих блоков
     document.querySelectorAll('.block').forEach(block => {
         createResizePanel(block);
         makeBlockInteractive(block);

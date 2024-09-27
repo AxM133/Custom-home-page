@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Blocks</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</head>
+<body>
+    <!-- Профиль пользователя -->
+    <div id="user-profile">
+        <label for="avatar-input">
+            <img id="avatar" src="images/default-avatar.png" alt="Аватар пользователя">
+        </label>
+        <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+        <div id="username" contenteditable="true">Ваш никнейм</div>
+    </div>
+
+    <!-- Контейнер для блоков -->
+    <div id="grid-container">
+        <!-- Блоки с предопределенными местами -->
+        <div class="block" data-id="1"><div class="block-content">Block 1</div></div>
+        <div class="block" data-id="2"><div class="block-content">Block 2</div></div>
+        <div class="block" data-id="3"><div class="block-content">Block 3</div></div>
+    </div>
+
+    <!-- Панель редактирования блока -->
+    <div id="block-editor-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <!-- Форма для ввода данных блока -->
+            <div id="block-editor">
+                <label>Ссылка:
+                    <input type="text" id="block-link">
+                </label>
+                <label>Картинка:
+                    <input type="file" id="block-image-input" accept="image/*">
+                </label>
+                <label>Текст:
+                    <textarea id="block-text"></textarea>
+                </label>
+            </div>
+            <button id="save-block-btn">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Панель для управления блоками -->
+    <div id="bottom-toolbar">
+        <button id="add-link-btn">Link</button>
+        <button id="add-image-btn">Image</button>
+        <button id="add-text-btn">Text</button>
+        <button id="reset-btn">Сбросить все</button>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

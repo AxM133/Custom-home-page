@@ -21,6 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isEditMode = false; // Флаг режима редактирования
 
+    // Динамическая генерация ячеек сетки
+    function generateGridCells() {
+        gridContainer.innerHTML = '';
+        const totalCells = 16; // Вы можете изменить количество ячеек здесь
+
+        for (let i = 1; i <= totalCells; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            cell.setAttribute('data-position', i);
+            gridContainer.appendChild(cell);
+        }
+    }
+
+    generateGridCells();
+
     // Загрузка профиля пользователя
     function loadUserProfile() {
         const savedAvatar = localStorage.getItem('avatar');
@@ -44,13 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     avatarInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 avatar.src = event.target.result;
                 localStorage.setItem('avatar', event.target.result);
             };
             reader.readAsDataURL(file);
+        } else {
+            alert('Пожалуйста, выберите корректный файл изображения.');
         }
     });
 
@@ -80,7 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     resetBtn.addEventListener('click', () => {
-        resetAll();
+        if (confirm('Вы уверены, что хотите сбросить все настройки?')) {
+            resetAll();
+        }
     });
 
     // Функции модального окна
@@ -104,6 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const imageFile = blockImageInput.files ? blockImageInput.files[0] : null;
         const text = blockTextInput.value.trim();
 
+        if (!link && !imageFile && !text) {
+            alert('Пожалуйста, заполните хотя бы одно поле.');
+            return;
+        }
+
         createLinkBlock(link, imageFile, text);
         closeBlockEditorModal();
     });
@@ -126,27 +150,30 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBlocks();
         }
 
-        if (imageFile) {
+        if (imageFile && imageFile.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 content += `<img src="${event.target.result}" alt="Image">`;
                 if (text) {
-                    content += `<div>${text}</div>`;
+                    content += `<div>${escapeHtml(text)}</div>`;
                 }
                 finalizeContent();
             };
             reader.readAsDataURL(imageFile);
         } else {
+            if (imageFile) {
+                alert('Пожалуйста, выберите корректный файл изображения.');
+            }
             finalizeContent();
         }
 
         function finalizeContent() {
-            if (text) {
-                content += `<div>${text}</div>`;
+            if (text && !imageFile) {
+                content += `<div>${escapeHtml(text)}</div>`;
             }
             if (link) {
                 // Оборачиваем контент в ссылку
-                content = `<a href="${link}" target="_blank">${content}</a>`;
+                content = `<a href="${link}" target="_blank" rel="noopener noreferrer">${content}</a>`;
             }
             finalizeBlock();
         }
@@ -159,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         block.setAttribute('data-id', Date.now());
         block.setAttribute('data-type', 'image');
 
-        block.innerHTML = `<div class="block-content">Click to add image</div>`;
+        block.innerHTML = `<div class="block-content">Нажмите, чтобы добавить изображение</div>`;
         placeBlockInFirstAvailableCell(block);
 
         const fileInput = document.createElement('input');
@@ -177,13 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
+            if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     blockContent.innerHTML = `<img src="${event.target.result}" alt="Image">`;
                     saveBlocks();
                 };
                 reader.readAsDataURL(file);
+            } else {
+                alert('Пожалуйста, выберите корректный файл изображения.');
             }
         });
 
@@ -202,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const contentDiv = document.createElement('div');
         contentDiv.classList.add('block-content');
-        contentDiv.textContent = 'Double-click to edit text';
+        contentDiv.textContent = 'Двойной клик для редактирования текста';
         contentDiv.contentEditable = false;
 
         block.addEventListener('dblclick', () => {
@@ -243,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const increaseButton = document.createElement('button');
         increaseButton.innerHTML = '<i class="material-icons">zoom_out_map</i>';
+        increaseButton.title = 'Увеличить размер';
         increaseButton.addEventListener('click', () => {
             if (isEditMode) {
                 scaleBlock(block, 'increase');
@@ -251,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const decreaseButton = document.createElement('button');
         decreaseButton.innerHTML = '<i class="material-icons">zoom_in_map</i>';
+        decreaseButton.title = 'Уменьшить размер';
         decreaseButton.addEventListener('click', () => {
             if (isEditMode) {
                 scaleBlock(block, 'decrease');
@@ -259,9 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '<i class="material-icons">delete</i>';
+        deleteButton.title = 'Удалить блок';
         deleteButton.addEventListener('click', () => {
             if (isEditMode) {
-                removeBlock(block);
+                if (confirm('Вы уверены, что хотите удалить этот блок?')) {
+                    removeBlock(block);
+                }
             }
         });
 
@@ -286,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function scaleBlock(block, action) {
         let width = parseInt(block.style.width) || block.parentElement.offsetWidth;
         let height = parseInt(block.style.height) || block.parentElement.offsetHeight;
-        const scaleFactor = 50;
+        const scaleFactor = 20;
 
         if (action === 'increase') {
             width += scaleFactor;
@@ -306,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleEditMode() {
         const blocks = document.querySelectorAll('.block');
         blocks.forEach(block => {
-            const resizePanel = block.querySelector('.resize-panel');
             if (isEditMode) {
                 // Активируем перетаскивание
                 interact(block).draggable(true);
@@ -336,15 +369,35 @@ document.addEventListener('DOMContentLoaded', () => {
         interact(block).draggable({
             enabled: isEditMode,
             inertia: true,
+            autoScroll: true,
             onstart: function(event) {
                 if (isEditMode) {
                     block.classList.add('dragging');
+                    block.style.zIndex = 1000;
+
+                    // Получаем текущую позицию блока
+                    const rect = block.getBoundingClientRect();
+                    const containerRect = gridContainer.getBoundingClientRect();
+
+                    // Устанавливаем абсолютное позиционирование
+                    block.style.position = 'absolute';
+                    block.style.left = (rect.left - containerRect.left) + 'px';
+                    block.style.top = (rect.top - containerRect.top) + 'px';
+
+                    // Переносим блок в gridContainer
+                    gridContainer.appendChild(block);
+
+                    // Сохраняем начальные координаты
+                    block.setAttribute('data-left', rect.left - containerRect.left);
+                    block.setAttribute('data-top', rect.top - containerRect.top);
                 }
             },
             onmove: dragMoveListener,
             onend: function(event) {
                 if (isEditMode) {
                     block.classList.remove('dragging');
+                    block.style.zIndex = '';
+
                     snapBlockToGrid(block);
                     saveBlocks();
                 }
@@ -357,12 +410,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isEditMode) return;
 
         const target = event.target;
-        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
-        target.style.transform = `translate(${x}px, ${y}px)`;
-        target.setAttribute('data-x', x);
-        target.setAttribute('data-y', y);
+        // Вычисляем новые координаты
+        const dx = (parseFloat(target.getAttribute('data-left')) || 0) + event.dx;
+        const dy = (parseFloat(target.getAttribute('data-top')) || 0) + event.dy;
+
+        // Устанавливаем новые координаты
+        target.style.left = dx + 'px';
+        target.style.top = dy + 'px';
+
+        // Сохраняем новые координаты
+        target.setAttribute('data-left', dx);
+        target.setAttribute('data-top', dy);
     }
 
     // Привязка блока к сетке с обменом местами
@@ -391,11 +450,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Если ячейка занята, меняем блоки местами
             if (closestCell.classList.contains('occupied')) {
                 const targetBlock = closestCell.querySelector('.block');
-                const sourceCell = block.parentElement;
+                const sourceCell = document.querySelector(`.grid-cell[data-position="${block.getAttribute('data-position')}"]`);
 
                 // Обновляем позицию целевого блока
-                sourceCell.appendChild(targetBlock);
-                targetBlock.setAttribute('data-position', sourceCell.getAttribute('data-position'));
+                if (sourceCell) {
+                    sourceCell.appendChild(targetBlock);
+                    targetBlock.setAttribute('data-position', sourceCell.getAttribute('data-position'));
+                }
 
                 // Обновляем позицию перемещаемого блока
                 closestCell.appendChild(block);
@@ -404,8 +465,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveBlocks();
             } else {
                 // Освобождаем предыдущую ячейку
-                const previousCell = block.parentElement;
-                previousCell.classList.remove('occupied');
+                const previousCell = document.querySelector(`.grid-cell[data-position="${block.getAttribute('data-position')}"]`);
+                if (previousCell) {
+                    previousCell.classList.remove('occupied');
+                }
 
                 // Занимаем новую ячейку
                 closestCell.appendChild(block);
@@ -413,15 +476,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 block.setAttribute('data-position', targetPosition);
             }
 
-            // Сбрасываем трансформацию
-            block.style.transform = '';
-            block.setAttribute('data-x', 0);
-            block.setAttribute('data-y', 0);
+            // Сбрасываем стили позиционирования
+            block.style.position = '';
+            block.style.left = '';
+            block.style.top = '';
+            block.removeAttribute('data-left');
+            block.removeAttribute('data-top');
         } else {
             // Возвращаем блок на место
-            block.style.transform = '';
-            block.setAttribute('data-x', 0);
-            block.setAttribute('data-y', 0);
+            block.style.left = '';
+            block.style.top = '';
+            block.removeAttribute('data-left');
+            block.removeAttribute('data-top');
         }
     }
 
@@ -465,12 +531,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Восстанавливаем события для блоков
                 if (data.type === 'image') {
-                    const fileInput = block.querySelector('input[type="file"]');
                     const blockContent = block.querySelector('.block-content');
                     blockContent.addEventListener('click', (e) => {
                         e.stopPropagation();
                         if (isEditMode) {
-                            fileInput.click();
+                            const fileInput = block.querySelector('input[type="file"]');
+                            if (fileInput) {
+                                fileInput.click();
+                            }
                         }
                     });
                 } else if (data.type === 'text') {
@@ -510,6 +578,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         localStorage.setItem('blocks', JSON.stringify(blockData));
+    }
+
+    // Функция для экранирования HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 
     // Инициализация

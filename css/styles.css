@@ -3,10 +3,10 @@ body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
   padding: 0;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f0f0f0; /* Цвет фона страницы */
+  background-color: #f0f0f0;
 }
 
 /* Профиль пользователя */
@@ -16,6 +16,7 @@ body {
   left: 20px;
   width: 150px;
   text-align: center;
+  z-index: 1000;
 }
 
 #user-profile img {
@@ -24,6 +25,11 @@ body {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid #ddd;
+  transition: transform 0.3s;
+}
+
+#user-profile img:hover {
+  transform: scale(1.05);
 }
 
 #user-profile #username {
@@ -36,43 +42,45 @@ body {
 
 /* Контейнер сетки */
 #grid-container {
-  margin-left: 180px; /* Отступ для профиля */
-  padding: 20px;
+  margin-left: 180px;
+  padding: 10px;
   flex-grow: 1;
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Увеличиваем размер ячеек */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   grid-gap: 20px;
 }
 
 /* Ячейки сетки */
 .grid-cell {
-  width: 200px; /* Увеличиваем размер ячеек */
-  height: 200px;
   position: relative;
-  background-color: #f0f0f0; /* Цвет фона ячеек совпадает с фоном страницы */
-  /* border: 1px dashed #ccc; */
+  background-color: #f0f0f0;
+  border: 1px dashed #ccc;
   border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1 / 1; /* Делает ячейки квадратными */
 }
 
 /* Блоки */
 .block {
-  background-color: #f0f0f0; /* Цвет фона блоков совпадает с фоном страницы */
-  /* border: 1px solid #ddd; */
+  background-color: #fff;
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
   position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   transition: box-shadow 0.3s, transform 0.2s;
   cursor: pointer;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  z-index: 1;
 }
 
 .block.dragging {
-  opacity: 0.8;
+  opacity: 0.9;
   z-index: 1000;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
   transform: scale(1.05);
@@ -82,23 +90,41 @@ body {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Анимация при наведении на блок */
+.block:hover .block-content {
+  transform: scale(1.02);
+}
+
 /* Стили для блоков разных типов */
-.block[data-type="link"] {
-  /* Цвета убраны, чтобы фон совпадал с фоном страницы */
+/* .block[data-type="link"] {
+  background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%);
 }
 
 .block[data-type="image"] {
-  /* Цвета убраны */
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
 }
 
 .block[data-type="text"] {
-  /* Цвета убраны */
-}
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+} */
 
 /* Содержимое блока */
+.block-content {
+  transition: transform 0.3s;
+  text-align: center;
+  width: 100%;
+}
+
 .block-content img {
   max-width: 100%;
   max-height: 100%;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+/* Текст в блоке */
+.block-content div {
+  word-wrap: break-word;
 }
 
 /* Панель управления блоком */
@@ -111,6 +137,7 @@ body {
   background: rgba(0,0,0,0.7);
   border-radius: 5px;
   padding: 5px;
+  z-index: 1001;
 }
 
 .resize-panel button {
@@ -143,6 +170,7 @@ body {
   display: flex;
   gap: 15px;
   align-items: center;
+  z-index: 1000;
 }
 
 #bottom-toolbar button {
@@ -155,6 +183,16 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#bottom-toolbar button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+#bottom-toolbar button:active {
+  transform: translateY(0);
 }
 
 #bottom-toolbar button i.material-icons {
@@ -165,6 +203,10 @@ body {
   background-color: red;
 }
 
+#reset-btn:hover {
+  background-color: darkred;
+}
+
 #toggle-edit-btn.active {
   background-color: green;
 }
@@ -172,7 +214,7 @@ body {
 /* Модальное окно */
 .modal {
   position: fixed;
-  z-index: 1000;
+  z-index: 2000;
   left: 0;
   top: 0;
   width: 100%;
@@ -188,6 +230,18 @@ body {
   max-width: 400px;
   border-radius: 10px;
   position: relative;
+  animation: modalShow 0.5s ease;
+}
+
+@keyframes modalShow {
+  from {
+      opacity: 0;
+      transform: translateY(-50px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
 }
 
 .modal-content label {
@@ -204,6 +258,10 @@ body {
   border-radius: 5px;
 }
 
+.modal-content textarea {
+  resize: vertical;
+}
+
 .close-button {
   position: absolute;
   top: 10px;
@@ -214,14 +272,38 @@ body {
 
 #save-block-btn {
   padding: 10px 20px;
-  background-color: #007BFF;
+  background-color: #28a745;
   color: white;
   border: none;
   cursor: pointer;
   border-radius: 5px;
   margin-top: 10px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#save-block-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+#save-block-btn:active {
+  transform: translateY(0);
 }
 
 .hidden {
   display: none;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  #user-profile {
+      position: relative;
+      margin: 10px auto;
+  }
+  #grid-container {
+      margin-left: 0;
+  }
+  #bottom-toolbar {
+      bottom: 20px;
+  }
 }

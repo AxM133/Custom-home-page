@@ -1,3 +1,6 @@
+// Добавляем глобальную переменную для отслеживания позиций
+let nextPosition = 1;
+
 document.addEventListener('DOMContentLoaded', () => {
     const avatar = document.getElementById('avatar');
     const avatarInput = document.getElementById('avatar-input');
@@ -20,21 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
 
     let isEditMode = false; // Флаг режима редактирования
-
-    // Динамическая генерация ячеек сетки
-    function generateGridCells() {
-        gridContainer.innerHTML = '';
-        const totalCells = 16; // Вы можете изменить количество ячеек здесь
-
-        for (let i = 1; i <= totalCells; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('grid-cell');
-            cell.setAttribute('data-position', i);
-            gridContainer.appendChild(cell);
-        }
-    }
-
-    generateGridCells();
 
     // Загрузка профиля пользователя
     function loadUserProfile() {
@@ -142,12 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
         let content = '';
 
         function finalizeBlock() {
-            block.innerHTML = `<div class="block-content">${content}</div>`;
-            placeBlockInFirstAvailableCell(block);
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('block-content');
+            contentDiv.innerHTML = content;
 
+            block.appendChild(contentDiv);
             createResizePanel(block);
+
+            // Создаем grid-cell и добавляем в grid-container
+            const gridCell = document.createElement('div');
+            gridCell.classList.add('grid-cell');
+            gridCell.setAttribute('data-position', nextPosition);
+            gridCell.classList.add('occupied'); // Помечаем ячейку как занятую
+            block.setAttribute('data-position', nextPosition);
+            nextPosition++;
+
+            gridCell.appendChild(block);
+            gridContainer.appendChild(gridCell);
+
             makeBlockInteractive(block);
             saveBlocks();
+        }
+
+        function finalizeContent() {
+            if (text && !imageFile) {
+                content += `<div>${escapeHtml(text)}</div>`;
+            }
+            if (link) {
+                // Оборачиваем контент в ссылку
+                content = `<a href="${link}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+            }
+            finalizeBlock();
         }
 
         if (imageFile && imageFile.type.startsWith('image/')) {
@@ -166,17 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             finalizeContent();
         }
-
-        function finalizeContent() {
-            if (text && !imageFile) {
-                content += `<div>${escapeHtml(text)}</div>`;
-            }
-            if (link) {
-                // Оборачиваем контент в ссылку
-                content = `<a href="${link}" target="_blank" rel="noopener noreferrer">${content}</a>`;
-            }
-            finalizeBlock();
-        }
     }
 
     // Создание блока-картинки
@@ -186,16 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
         block.setAttribute('data-id', Date.now());
         block.setAttribute('data-type', 'image');
 
-        block.innerHTML = `<div class="block-content">Нажмите, чтобы добавить изображение</div>`;
-        placeBlockInFirstAvailableCell(block);
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('block-content');
+        contentDiv.textContent = 'Нажмите, чтобы добавить изображение';
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         fileInput.style.display = 'none';
 
-        const blockContent = block.querySelector('.block-content');
-        blockContent.addEventListener('click', (e) => {
+        contentDiv.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isEditMode) {
                 fileInput.click();
@@ -207,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    blockContent.innerHTML = `<img src="${event.target.result}" alt="Image">`;
+                    contentDiv.innerHTML = `<img src="${event.target.result}" alt="Image">`;
                     saveBlocks();
                 };
                 reader.readAsDataURL(file);
@@ -216,8 +218,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        block.appendChild(contentDiv);
         block.appendChild(fileInput);
         createResizePanel(block);
+
+        // Создаем grid-cell и добавляем в grid-container
+        const gridCell = document.createElement('div');
+        gridCell.classList.add('grid-cell');
+        gridCell.setAttribute('data-position', nextPosition);
+        gridCell.classList.add('occupied'); // Помечаем ячейку как занятую
+        block.setAttribute('data-position', nextPosition);
+        nextPosition++;
+
+        gridCell.appendChild(block);
+        gridContainer.appendChild(gridCell);
+
         makeBlockInteractive(block);
         saveBlocks();
     }
@@ -234,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
         contentDiv.textContent = 'Двойной клик для редактирования текста';
         contentDiv.contentEditable = false;
 
+        block.appendChild(contentDiv);
+        createResizePanel(block);
+
         block.addEventListener('dblclick', () => {
             if (isEditMode) {
                 contentDiv.contentEditable = true;
@@ -246,23 +264,19 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBlocks();
         });
 
-        block.appendChild(contentDiv);
-        placeBlockInFirstAvailableCell(block);
-        createResizePanel(block);
+        // Создаем grid-cell и добавляем в grid-container
+        const gridCell = document.createElement('div');
+        gridCell.classList.add('grid-cell');
+        gridCell.setAttribute('data-position', nextPosition);
+        gridCell.classList.add('occupied'); // Помечаем ячейку как занятую
+        block.setAttribute('data-position', nextPosition);
+        nextPosition++;
+
+        gridCell.appendChild(block);
+        gridContainer.appendChild(gridCell);
+
         makeBlockInteractive(block);
         saveBlocks();
-    }
-
-    // Размещение блока в первой доступной ячейке
-    function placeBlockInFirstAvailableCell(block) {
-        const emptyCell = document.querySelector('.grid-cell:not(.occupied)');
-        if (emptyCell) {
-            emptyCell.classList.add('occupied');
-            emptyCell.appendChild(block);
-            block.setAttribute('data-position', emptyCell.getAttribute('data-position'));
-        } else {
-            alert('Нет свободных ячеек для размещения блока.');
-        }
     }
 
     // Панель управления блоком
@@ -307,12 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Удаление блока
     function removeBlock(block) {
-        const position = block.getAttribute('data-position');
-        const cell = document.querySelector(`.grid-cell[data-position="${position}"]`);
-        if (cell) {
-            cell.classList.remove('occupied');
-        }
-        block.remove();
+        const parentCell = block.parentElement;
+        block.remove(); // Удаляем блок из ячейки
+        parentCell.classList.remove('occupied'); // Помечаем ячейку как свободную
         saveBlocks();
     }
 
@@ -375,14 +386,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     block.classList.add('dragging');
                     block.style.zIndex = 1000;
 
-                    // Получаем текущую позицию блока
+                    // Получаем размеры блока
                     const rect = block.getBoundingClientRect();
                     const containerRect = gridContainer.getBoundingClientRect();
 
+                    // Устанавливаем явную ширину и высоту, чтобы сохранить размеры
+                    block.style.width = `${rect.width}px`;
+                    block.style.height = `${rect.height}px`;
+
                     // Устанавливаем абсолютное позиционирование
                     block.style.position = 'absolute';
-                    block.style.left = (rect.left - containerRect.left) + 'px';
-                    block.style.top = (rect.top - containerRect.top) + 'px';
+                    block.style.left = `${rect.left - containerRect.left}px`;
+                    block.style.top = `${rect.top - containerRect.top}px`;
 
                     // Переносим блок в gridContainer
                     gridContainer.appendChild(block);
@@ -405,7 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Функция перемещения блока
     function dragMoveListener(event) {
         if (!isEditMode) return;
 
@@ -424,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         target.setAttribute('data-top', dy);
     }
 
-    // Привязка блока к сетке с обменом местами
+    // Функция привязки блока к сетке и обмена местами
     function snapBlockToGrid(block) {
         const cells = document.querySelectorAll('.grid-cell');
         let closestCell = null;
@@ -447,45 +461,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closestCell) {
             const targetPosition = closestCell.getAttribute('data-position');
 
-            // Если ячейка занята, меняем блоки местами
-            if (closestCell.classList.contains('occupied')) {
-                const targetBlock = closestCell.querySelector('.block');
-                const sourceCell = document.querySelector(`.grid-cell[data-position="${block.getAttribute('data-position')}"]`);
+            // Получаем блок в целевой ячейке, если он есть
+            const targetBlock = closestCell.querySelector('.block');
+            const sourceCell = block.previousCell || block.parentElement;
+            const sourcePosition = block.getAttribute('data-position');
 
-                // Обновляем позицию целевого блока
-                if (sourceCell) {
-                    sourceCell.appendChild(targetBlock);
-                    targetBlock.setAttribute('data-position', sourceCell.getAttribute('data-position'));
-                }
-
-                // Обновляем позицию перемещаемого блока
-                closestCell.appendChild(block);
-                block.setAttribute('data-position', targetPosition);
-
-                saveBlocks();
+            if (targetBlock) {
+                // Обмениваем блоки местами
+                sourceCell.appendChild(targetBlock);
+                targetBlock.setAttribute('data-position', sourcePosition);
             } else {
-                // Освобождаем предыдущую ячейку
-                const previousCell = document.querySelector(`.grid-cell[data-position="${block.getAttribute('data-position')}"]`);
-                if (previousCell) {
-                    previousCell.classList.remove('occupied');
+                // Помечаем исходную ячейку как свободную
+                if (sourceCell) {
+                    sourceCell.classList.remove('occupied');
                 }
-
-                // Занимаем новую ячейку
-                closestCell.appendChild(block);
-                closestCell.classList.add('occupied');
-                block.setAttribute('data-position', targetPosition);
             }
 
-            // Сбрасываем стили позиционирования
+            // Перемещаем блок в целевую ячейку
+            closestCell.appendChild(block);
+            block.setAttribute('data-position', targetPosition);
+            closestCell.classList.add('occupied');
+
+            // Сохраняем текущую ячейку как предыдущую для корректной работы
+            block.previousCell = closestCell;
+
+            // Сбрасываем стили позиционирования и размеров
             block.style.position = '';
             block.style.left = '';
             block.style.top = '';
+            block.style.width = '';
+            block.style.height = '';
             block.removeAttribute('data-left');
             block.removeAttribute('data-top');
         } else {
             // Возвращаем блок на место
             block.style.left = '';
             block.style.top = '';
+            block.style.width = '';
+            block.style.height = '';
             block.removeAttribute('data-left');
             block.removeAttribute('data-top');
         }
@@ -493,8 +506,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Сброс всех данных
     function resetAll() {
-        document.querySelectorAll('.block').forEach(block => {
-            removeBlock(block);
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.remove();
         });
 
         avatar.src = 'images/default-avatar.png';
@@ -502,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         username.textContent = 'Ваш никнейм';
         localStorage.removeItem('username');
         localStorage.removeItem('blocks');
+        nextPosition = 1;
     }
 
     // Загрузка блоков из localStorage
@@ -516,23 +530,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 block.setAttribute('data-type', data.type);
                 block.style.width = data.width;
                 block.style.height = data.height;
+                block.setAttribute('data-position', data.position);
 
-                block.innerHTML = `<div class="block-content">${data.content}</div>`;
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('block-content');
+                contentDiv.innerHTML = data.content;
 
-                const cell = document.querySelector(`.grid-cell[data-position="${data.position}"]`);
-                if (cell) {
-                    cell.classList.add('occupied');
-                    cell.appendChild(block);
-                    block.setAttribute('data-position', data.position);
-                }
-
+                block.appendChild(contentDiv);
                 createResizePanel(block);
                 makeBlockInteractive(block);
 
                 // Восстанавливаем события для блоков
                 if (data.type === 'image') {
-                    const blockContent = block.querySelector('.block-content');
-                    blockContent.addEventListener('click', (e) => {
+                    contentDiv.addEventListener('click', (e) => {
                         e.stopPropagation();
                         if (isEditMode) {
                             const fileInput = block.querySelector('input[type="file"]');
@@ -542,7 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 } else if (data.type === 'text') {
-                    const contentDiv = block.querySelector('.block-content');
                     contentDiv.contentEditable = false;
 
                     block.addEventListener('dblclick', () => {
@@ -556,6 +565,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         contentDiv.contentEditable = false;
                         saveBlocks();
                     });
+                }
+
+                // Создаем grid-cell и добавляем в grid-container
+                const gridCell = document.createElement('div');
+                gridCell.classList.add('grid-cell');
+                gridCell.setAttribute('data-position', data.position);
+                gridCell.classList.add('occupied'); // Помечаем ячейку как занятую
+                gridCell.appendChild(block);
+                gridContainer.appendChild(gridCell);
+
+                // Обновляем nextPosition
+                if (parseInt(data.position) >= nextPosition) {
+                    nextPosition = parseInt(data.position) + 1;
                 }
             });
         }
@@ -595,10 +617,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализация
     loadBlocks();
     toggleEditMode(); // Устанавливаем начальное состояние режима редактирования
-
-    // Добавляем события для существующих блоков
-    document.querySelectorAll('.block').forEach(block => {
-        createResizePanel(block);
-        makeBlockInteractive(block);
-    });
 });
